@@ -35,25 +35,22 @@ def calculate_investment(monthly_amount, monthly_rate, months):
     return total
 
 if __name__ == '__main__':
-    # データ読み込みと基本的な計算
     df = load_data()
-    period = 20
+    st.header("Investment Settings")
+    period = st.slider("Investment Period [years]", 5, 40, value=20)
     period_m = period * 12
-    monthly_investment = 30
+    monthly_investment = st.number_input("Investment per month", value=10000)
 
-    # 事前計算
     df_result = calculate_historical_investment(df, period, monthly_investment)
-    interest_004 = calculate_investment(monthly_amount=30, monthly_rate=(1.04)**(1/12)-1, months=period_m)
-    interest_006 = calculate_investment(monthly_amount=30, monthly_rate=(1.06)**(1/12)-1, months=period_m)
-    deposit = calculate_investment(monthly_amount=30, monthly_rate=0, months=period_m)
-
-    # UI部分
-    multi = st.multiselect("Select years to plot", range(1928, 2005))
+    interest_004 = calculate_investment(monthly_amount=monthly_investment, monthly_rate=(1.04)**(1/12)-1, months=period_m)
+    interest_006 = calculate_investment(monthly_amount=monthly_investment, monthly_rate=(1.06)**(1/12)-1, months=period_m)
+    deposit = calculate_investment(monthly_amount=monthly_investment, monthly_rate=0, months=period_m)
+    st.header("Historical Data Selection")
+    multi = st.multiselect("Select years to plot", range(1928, 2024-period+1), [1928])
     
-    # Plotlyでのプロット作成
     fig = go.Figure()
-    
-    # 年毎の投資結果をプロット
+    st.header("Comparison View")
+
     x_years = [i/12 for i in range(period_m)]
     for year in multi:
         fig.add_trace(go.Scatter(
@@ -62,9 +59,9 @@ if __name__ == '__main__':
             name=f"{year}-1 - {year+period-1}-1",
             mode='lines'
         ))
-    
-    # 比較用の投資結果をプロット
-    if st.checkbox("Show 4% interest rate"):
+
+    st.subheader("Benchmark Options")
+    if st.checkbox("Show 4% interest rate", True):
         fig.add_trace(go.Scatter(
             x=x_years,
             y=interest_004,
@@ -72,8 +69,8 @@ if __name__ == '__main__':
             mode='lines',
             line=dict(dash='dash')
         ))
-    
-    if st.checkbox("Show 6% interest rate"):
+
+    if st.checkbox("Show 6% interest rate", False):
         fig.add_trace(go.Scatter(
             x=x_years,
             y=interest_006,
@@ -81,8 +78,8 @@ if __name__ == '__main__':
             mode='lines',
             line=dict(dash='dash')
         ))
-    
-    if st.checkbox("Show deposit"):
+
+    if st.checkbox("Show deposit", True):
         fig.add_trace(go.Scatter(
             x=x_years,
             y=deposit,
@@ -91,7 +88,6 @@ if __name__ == '__main__':
             line=dict(dash='dot')
         ))
     
-    # グラフのレイアウト設定
     fig.update_layout(
         title="Investment Growth Over Time",
         xaxis_title="Years",
@@ -110,5 +106,4 @@ if __name__ == '__main__':
         )
     )
 
-    # Plotlyのグラフを表示
     st.plotly_chart(fig, use_container_width=True)
