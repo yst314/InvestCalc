@@ -35,22 +35,69 @@ def calculate_investment(monthly_amount, monthly_rate, months):
     return total
 
 if __name__ == '__main__':
-    df = load_data()
-    st.header("Investment Settings")
-    period = st.slider("Investment Period [years]", 5, 40, value=20)
-    period_m = period * 12
-    monthly_investment = st.number_input("Investment per month", value=10000)
+    st.set_page_config(page_title="InvestCalc", layout="wide")
 
-    df_result = calculate_historical_investment(df, period, monthly_investment)
-    interest_004 = calculate_investment(monthly_amount=monthly_investment, monthly_rate=(1.04)**(1/12)-1, months=period_m)
-    interest_006 = calculate_investment(monthly_amount=monthly_investment, monthly_rate=(1.06)**(1/12)-1, months=period_m)
-    deposit = calculate_investment(monthly_amount=monthly_investment, monthly_rate=0, months=period_m)
-    st.header("Historical Data Selection")
-    multi = st.multiselect("Select years to plot", range(1928, 2024-period+1), [1928])
-    
+    with st.sidebar:
+        st.header("Settings")
+        language = st.selectbox(
+            "Language",
+            options=["English", "日本語"],
+            index=1,
+        )
+        
+        
+        # 言語に応じてテキストを切り替え
+        texts = {
+            "English": {
+                "investment_settings": "Investment Settings",
+                "investment_period": "Investment Period [years]",
+                "monthly_investment": "Investment per month",
+                "historical_data": "Historical Data Selection",
+                "select_years": "Select years to plot",
+                "comparison_view": "Comparison View",
+                "benchmark": "Benchmark Options",
+                "show_4p": "Show 4% annual interest rate",
+                "label_4p": "Annual interest rate: 4%",
+                "show_6p": "Show 6% annual interest rate",
+                "label_6p": "Annual interest rate: 6%",
+                "label_deposit": "Deposit",
+                "show_deposit": "Show deposit",
+                "plot_investment_growth": "Investment Growth Over Time",
+            },
+            "日本語": {
+                "investment_settings": "投資設定",
+                "investment_period": "投資期間 [年]",
+                "monthly_investment": "月々の投資額",
+                "historical_data": "過去データの選択",
+                "select_years": "表示する年を選択",
+                "comparison_view": "比較表示",
+                "benchmark": "ベンチマーク設定",
+                "show_4p": "年利4%を表示",
+                "label_4p": "年利: 4%",
+                "show_6p": "年利6%を表示",
+                "label_6p": "年利: 6%",
+                "label_deposit": "預金",
+                "show_deposit": "預金を表示",
+                "plot_investment_growth": "投資資産の推移",
+            }
+        }
+        t = texts[language]
+        df = load_data()
+        st.header(t["investment_settings"])
+        period = st.slider(t["investment_period"], 5, 40, value=20)
+        period_m = period * 12
+        monthly_investment = st.number_input(t["monthly_investment"], value=10000)
+
+        df_result = calculate_historical_investment(df, period, monthly_investment)
+        interest_004 = calculate_investment(monthly_amount=monthly_investment, monthly_rate=(1.04)**(1/12)-1, months=period_m)
+        interest_006 = calculate_investment(monthly_amount=monthly_investment, monthly_rate=(1.06)**(1/12)-1, months=period_m)
+        deposit = calculate_investment(monthly_amount=monthly_investment, monthly_rate=0, months=period_m)
+        
     fig = go.Figure()
-    st.header("Comparison View")
-
+    st.header(t["comparison_view"])
+    st.subheader(t["historical_data"])
+    multi = st.multiselect(t["select_years"], range(1928, 2024-period+1), [1928, 1981, 2004])
+    
     x_years = [i/12 for i in range(period_m)]
     for year in multi:
         fig.add_trace(go.Scatter(
@@ -59,37 +106,36 @@ if __name__ == '__main__':
             name=f"{year}-1 - {year+period-1}-1",
             mode='lines'
         ))
+    with st.expander(t["benchmark"]):
+        if st.checkbox(t["show_4p"], True):
+            fig.add_trace(go.Scatter(
+                x=x_years,
+                y=interest_004,
+                name=t["label_4p"],
+                mode='lines',
+                line=dict(dash='dash')
+            ))
 
-    st.subheader("Benchmark Options")
-    if st.checkbox("Show 4% interest rate", True):
-        fig.add_trace(go.Scatter(
-            x=x_years,
-            y=interest_004,
-            name="Interest rate: 4%",
-            mode='lines',
-            line=dict(dash='dash')
-        ))
+        if st.checkbox(t["show_6p"], False):
+            fig.add_trace(go.Scatter(
+                x=x_years,
+                y=interest_006,
+                name=t["label_6p"],
+                mode='lines',
+                line=dict(dash='dash')
+            ))
 
-    if st.checkbox("Show 6% interest rate", False):
-        fig.add_trace(go.Scatter(
-            x=x_years,
-            y=interest_006,
-            name="Interest rate: 6%",
-            mode='lines',
-            line=dict(dash='dash')
-        ))
-
-    if st.checkbox("Show deposit", True):
-        fig.add_trace(go.Scatter(
-            x=x_years,
-            y=deposit,
-            name="Deposit",
-            mode='lines',
-            line=dict(dash='dot')
-        ))
+        if st.checkbox(t["show_deposit"], True):
+            fig.add_trace(go.Scatter(
+                x=x_years,
+                y=deposit,
+                name=t["label_deposit"],
+                mode='lines',
+                line=dict(dash='dot')
+            ))
     
     fig.update_layout(
-        title="Investment Growth Over Time",
+        title=t["plot_investment_growth"],
         xaxis_title="Years",
         yaxis_title="Assets",
         yaxis=dict(
