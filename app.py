@@ -96,7 +96,7 @@ if __name__ == '__main__':
     fig = go.Figure()
     st.header(t["comparison_view"])
     st.subheader(t["historical_data"])
-    multi = st.multiselect(t["select_years"], range(1928, 2024-period+1), [1928, 1981, 2004])
+    multi = st.multiselect(t["select_years"], range(1928, 2024-period+1), [1928, 1981])
     
     x_years = [i/12 for i in range(period_m)]
     for year in multi:
